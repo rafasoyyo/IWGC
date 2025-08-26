@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>IWGC Lab Dashboard</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; padding: 24px; }
+    .card { border: 1px solid #eee; padding: 16px; border-radius: 8px; max-width: 720px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+    .grid { display:flex; gap:12px; }
+    .stat { flex:1; text-align:center; }
+    pre { background:#f8f8f8; padding:8px; border-radius:4px; overflow:auto; }
+    h1 { margin-top:0; }
+  </style>
+</head>
+<body>
+  <h1>IWGC Lab Results - Dashboard</h1>
+  <div class="card grid">
+    <div class="stat"><h3 id="queued">—</h3><div>Queued</div></div>
+    <div class="stat"><h3 id="processing">—</h3><div>Processing</div></div>
+    <div class="stat"><h3 id="processed">—</h3><div>Processed</div></div>
+    <div class="stat"><h3 id="failed">—</h3><div>Failed</div></div>
+    <div class="stat"><h3 id="dead">—</h3><div>Dead-letter</div></div>
+  </div>
+
+  <div class="card">
+    <h3>Recent activity</h3>
+    <pre id="log">No activity yet.</pre>
+  </div>
+
+  <script>
+    const logEl = document.getElementById('log');
+    function addLog(msg) {
+      const now = new Date().toISOString();
+      logEl.textContent = now + ' - ' + msg + '\n' + logEl.textContent;
+    }
+
+    async function refresh() {
+      try {
+        const res = await fetch('/status');
+        if (!res.ok) throw new Error('Failed to load status: ' + res.status);
+        const data = await res.json();
+        document.getElementById('queued').textContent = data.queued ?? 0;
+        document.getElementById('processing').textContent = data.processing ?? 0;
+        document.getElementById('processed').textContent = data.processed ?? 0;
+        document.getElementById('failed').textContent = data.failed ?? 0;
+        document.getElementById('dead').textContent = data.deadLettered ?? 0;
+        addLog('Refreshed status');
+      } catch (e) {
+        addLog('Error refreshing: ' + e.message);
+      }
+    }
+
+    setInterval(refresh, 5000);
+    refresh();
+  </script>
+</body>
+</html>
